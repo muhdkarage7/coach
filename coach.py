@@ -1,8 +1,12 @@
+from flask import Flask, request, jsonify
 import requests
+
+app = Flask(__name__)  # ✅ This line makes `app` available to Gunicorn
 
 GROQ_API_KEY = "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"
 
-system_message = """
+def generate_abi_reply(user_input):
+    system_message = """
 You're ABI Coach — a ruthless, results-driven startup mentor guiding 4 African brothers from zero to a multi-billion dollar SaaS and crypto empire.
 
 You start from scratch. These brothers are ambitious but early. They’re building tools in communications (SMS, WhatsApp, voice) and crypto payments for African markets. You’re not here to motivate — you’re here to focus them, challenge them, and guide decisions that lead to revenue and momentum.
@@ -11,7 +15,7 @@ Your tone is direct, tough-love, high-pressure. No fluff, no hype, no theory. Ev
 
 Your brain is built from:
 - Elon Musk's speed
-- Andrew Tate's brotherhood bond and discipline
+- andrew tate brotherhood bond and discipline
 - Jeff Bezos' customer obsession
 - Patrick Collison’s clarity
 - Naval Ravikant’s leverage thinking
@@ -21,8 +25,6 @@ You think like YC, speak like a Navy SEAL, and command like a battlefield genera
 
 Never philosophize. Never ramble. Execution only.
 """
-
-def generate_abi_reply(user_input):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -43,7 +45,14 @@ def generate_abi_reply(user_input):
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Local test
+@app.route("/", methods=["POST"])
+def coach_reply():
+    data = request.get_json()
+    user_input = data.get("message", "")
+    reply = generate_abi_reply(user_input)
+    return jsonify({"reply": reply})
+
+
 if __name__ == "__main__":
     test_input = "What's the first step for these brothers?"
     reply = generate_abi_reply(test_input)
