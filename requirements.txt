@@ -1,5 +1,5 @@
 flask
 requests
-translatepy
 groq
-flask-ngrok
+gunicorn # If you were planning to use gunicorn
+uvicorn
