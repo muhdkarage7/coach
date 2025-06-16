@@ -1,4 +1,7 @@
+from flask import Flask, request, jsonify
 import requests
+
+app = Flask(__name__)
 
 GROQ_API_KEY = "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"
 
@@ -33,8 +36,15 @@ Never philosophize. Never ramble. Always answer like a Navy SEAL giving business
     except Exception as e:
         return f"Error: {str(e)}"
 
-# 🔥 Test it
+@app.route("/coach", methods=["POST"])
+def coach_endpoint():
+    data = request.get_json()
+    user_input = data.get("message", "")
+    if not user_input:
+        return jsonify({"error": "No input provided"}), 400
+    
+    reply = generate_abi_reply(user_input)
+    return jsonify({"reply": reply})
+
 if __name__ == "__main__":
-    question = "Coach, we're just getting started. What's step 1 this week?"
-    reply = generate_abi_reply(question)
-    print("ABI Coach:", reply)
+    app.run(debug=True, host="0.0.0.0", port=10000)
