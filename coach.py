@@ -1,8 +1,6 @@
-from flask import Flask, request, jsonify
 import requests
 
-app = Flask(__name__)
-
+# Replace with your Groq API key
 GROQ_API_KEY = "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"
 
 def generate_abi_reply(user_input):
@@ -32,19 +30,11 @@ Never philosophize. Never ramble. Always answer like a Navy SEAL giving business
     try:
         response = requests.post(url, headers=headers, json=payload)
         result = response.json()
-        return result["choices"][0]["message"]["content"].strip()
+        return result["choices"][0]["message"]["content"]
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error occurred: {str(e)}"
 
-@app.route("/coach", methods=["POST"])
-def coach_endpoint():
-    data = request.get_json()
-    user_input = data.get("message", "")
-    if not user_input:
-        return jsonify({"error": "No input provided"}), 400
-    
-    reply = generate_abi_reply(user_input)
-    return jsonify({"reply": reply})
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=10000)
+# Example usage
+user_question = "hi coach what the aim for the week?"
+reply = generate_abi_reply(user_question) # Corrected function call
+print("Bot:", reply) # Removed translation logic and simplified print
