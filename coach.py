@@ -1,40 +1,62 @@
+# Install dependencies
+!pip install flask-ngrok groq --quiet
+
+# ===== Setup Flask App =====
+from flask import Flask, request, jsonify
+from flask_ngrok import run_with_ngrok
+from groq import Groq
+import threading
 import requests
+import time
 
-# === CONFIG ===
-GROQ_API_KEY = "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"  # Use gsk_live_xxxxx from https://console.groq.com/keys
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL = "llama3-8b-8192"
+# Create Flask app
+app = Flask(__name__)
+run_with_ngrok(app)
 
-# === SYSTEM PROMPT ===
-system_message = """
-You are our personal life coach, team strategist, and startup co-founder.
-🎯 TEAM BACKGROUND: We are 4 brothers with different skills (engineering, crypto, hustle, and vision) working to build the next billion-dollar tech company.
-Your job: Guide us like a top-tier startup mentor. Suggest weekly goals. Break down ideas into technical and business steps.
-"""
+# Setup Groq client
+client = Groq(api_key="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")
 
-# === FUNCTION ===
-def ask_coach(user_input):
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
+# Route
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.get_json()
+    question = data.get("question", "What should we focus on this week?")
+    print("➡️ Incoming Question:", question)
 
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": user_input}
+    response = client.chat.completions.create(
+        model="llama3-8b-8192",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You're a disciplined, aggressive startup coach. You're a guardian motivator. "
+                    "You speak with confidence, urgency, and direction. Your tone is masculine, tough-love, no fluff. "
+                    "You coach 4 African brothers building a multi-million dollar comms + crypto SaaS empire. "
+                    "Every answer must drive action, focus, and monetization. Never philosophize. Never sugarcoat."
+                )
+            },
+            {"role": "user", "content": question}
         ]
-    }
+    )
 
+    reply = response.choices[0].message.content.strip()
+    print("✅ Coach says:", reply)
+    return jsonify({"coach_says": reply})
+
+
+# Function to test after a few seconds
+def test_request():
+    time.sleep(5)  # Wait for server to start
+    url = "http://127.0.0.1:5000/ask"
+    payload = {"question": "What's our most important revenue move this week?"}
     try:
-        response = requests.post(GROQ_API_URL, headers=headers, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data["choices"][0]["message"]["content"]
+        res = requests.post(url, json=payload)
+        print("📦 Response from /ask route:\n", res.json())
     except Exception as e:
-        return f"❌ Error: {str(e)}"
+        print("❌ Request failed:", e)
 
-# === TEST ===
-response = ask_coach("Coach, what's one thing we should focus on this week?")
-print("🤖 Coach says:", response)
+# Start tester in background
+threading.Thread(target=test_request).start()
+
+# Run Flask
+app.run()
