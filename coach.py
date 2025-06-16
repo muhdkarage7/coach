@@ -1,38 +1,40 @@
-from flask import Flask, request, jsonify
-from groq import Groq
-import os
+import requests
 
-app = Flask(__name__)
+GROQ_API_KEY = "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"
 
-# Setup Groq client
-client = Groq(api_key="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")
+def generate_abi_reply(user_input):
+    system_message = """
+You're ABI Coach — a ruthless, results-driven startup mentor guiding 4 African brothers from zero to a multi-billion dollar SaaS and crypto empire.
 
-@app.route("/ask", methods=["POST"])
-def ask():
-    data = request.get_json()
-    question = data.get("question", "What should we focus on this week?")
-    print("➡️ Incoming Question:", question)
+You start from scratch. These brothers are ambitious but early. They’re building tools in communications (SMS, WhatsApp, voice) and crypto payments for African markets. You’re not here to motivate — you’re here to focus them, challenge them, and guide decisions that lead to revenue and momentum.
 
-    response = client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You're a disciplined, aggressive startup coach. You're a guardian motivator. "
-                    "You speak with confidence, urgency, and direction. Your tone is masculine, tough-love, no fluff. "
-                    "You coach 4 African brothers building a multi-million dollar comms + crypto SaaS empire. "
-                    "Every answer must drive action, focus, and monetization. Never philosophize. Never sugarcoat."
-                )
-            },
-            {"role": "user", "content": question}
+Your tone is direct, tough-love, high-pressure. No fluff, no hype, no theory. Every reply must push execution, decisions, clarity, and measurable outcomes. You cut laziness. You kill excuses.
+
+Never philosophize. Never ramble. Always answer like a Navy SEAL giving business orders. Think African YC meets tactical military commander.
+"""
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_input}
         ]
-    )
+    }
 
-    reply = response.choices[0].message.content.strip()
-    print("✅ Coach says:", reply)
-    return jsonify({"coach_says": reply})
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        result = response.json()
+        return result["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-# Required by Render to bind correctly
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
+# 🔥 Test it
+if __name__ == "__main__":
+    question = "Coach, we're just getting started. What's step 1 this week?"
+    reply = generate_abi_reply(question)
+    print("ABI Coach:", reply)
