@@ -1,7 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, make_response
 import requests
 
-app = Flask(__name__)  # ✅ This line makes `app` available to Gunicorn
+app = Flask(__name__)
 
 GROQ_API_KEY = "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"
 
@@ -15,7 +15,7 @@ Your tone is direct, tough-love, high-pressure. No fluff, no hype, no theory. Ev
 
 Your brain is built from:
 - Elon Musk's speed
-- andrew tate brotherhood bond and discipline
+- Andrew Tate's brotherhood and discipline
 - Jeff Bezos' customer obsession
 - Patrick Collison’s clarity
 - Naval Ravikant’s leverage thinking
@@ -46,15 +46,16 @@ Never philosophize. Never ramble. Execution only.
         return f"Error: {str(e)}"
 
 @app.route("/", methods=["POST"])
-def coach_reply():
-    data = request.get_json()
-    user_input = data.get("message", "")
-    reply = generate_abi_reply(user_input)
-    return jsonify({"reply": reply})
+def receive_message():
+    incoming_msg = request.form.get("Body") or request.json.get("message") or ""
+    print(f"📥 Incoming: {incoming_msg}")
 
+    reply = generate_abi_reply(incoming_msg)
 
+    response = make_response(reply)
+    response.headers["Content-Type"] = "text/plain"
+    return response
+
+# optional local test
 if __name__ == "__main__":
-    test_input = "What's the first step for these brothers?"
-    reply = generate_abi_reply(test_input)
-    print("Reply from ABI Coach:")
-    print(reply)
+    app.run(port=5000)
