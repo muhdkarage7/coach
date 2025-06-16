@@ -1,19 +1,12 @@
-# ===== Setup Flask App =====
 from flask import Flask, request, jsonify
-from flask_ngrok import run_with_ngrok
 from groq import Groq
-import threading
-import requests
-import time
+import os
 
-# Create Flask app
 app = Flask(__name__)
-run_with_ngrok(app)
 
 # Setup Groq client
 client = Groq(api_key="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")
 
-# Route
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json()
@@ -40,20 +33,6 @@ def ask():
     print("✅ Coach says:", reply)
     return jsonify({"coach_says": reply})
 
-
-# Function to test after a few seconds
-def test_request():
-    time.sleep(5)  # Wait for server to start
-    url = "http://127.0.0.1:5000/ask"
-    payload = {"question": "What's our most important revenue move this week?"}
-    try:
-        res = requests.post(url, json=payload)
-        print("📦 Response from /ask route:\n", res.json())
-    except Exception as e:
-        print("❌ Request failed:", e)
-
-# Start tester in background
-threading.Thread(target=test_request).start()
-
-# Run Flask
-app.run()
+# Required by Render to bind correctly
+port = int(os.environ.get("PORT", 5000))
+app.run(host="0.0.0.0", port=port)
