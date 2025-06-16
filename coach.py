@@ -1,6 +1,3 @@
-# Install dependencies
-!pip install flask-ngrok groq --quiet
-
 # ===== Setup Flask App =====
 from flask import Flask, request, jsonify
 from flask_ngrok import run_with_ngrok
